@@ -298,3 +298,20 @@ static int nw_serial_calibrate(int infd, int outfd, int enable)
 	/* todo: loop until reply received or timeout */
 	return nw_serial_process(infd, outfd);
 }
+
+int nw_serial_forward(char *dev)
+{
+	int infd, outfd;
+
+	infd = nw_serial_open(dev);
+	outfd = nw_uinput_open();
+
+	if (infd == -1 || outfd == -1)
+		return 1;
+
+	while (1) {
+		nw_serial_process(infd, outfd);
+	}
+
+	return 0;
+}
