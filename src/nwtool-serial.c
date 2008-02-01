@@ -66,7 +66,10 @@ static int nw_uinput_open(void)
 {
 	struct uinput_user_dev uinput;
 	static const int ev_bits[] = { EV_SYN, EV_KEY, EV_ABS };
-	static const int key_bits[] = { BTN_LEFT, BTN_RIGHT };
+	/* protocol doesn't actually provide touch info, but we pretend to
+	   support it anyway as otherwise the input device will get taken by
+	   joydev (kernel thinks it's a joystick) */
+	static const int key_bits[] = { BTN_LEFT, BTN_RIGHT, BTN_TOUCH };
 	static const int abs_bits[] = { ABS_X, ABS_Y };
 	int fd, i;
 
@@ -295,4 +298,3 @@ static int nw_serial_calibrate(int infd, int outfd, int enable)
 	/* todo: loop until reply received or timeout */
 	return nw_serial_process(infd, outfd);
 }
-
