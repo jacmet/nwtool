@@ -426,77 +426,6 @@ static int nw_usb_get_calibration_presses(struct nwusb *nw)
 	return 0;
 }
 
-void nw_usb_test(void)
-{
-	struct nwusb nw;
-	HIDInterface *hid;
-	int ret;
-
-	memset(&nw, 0, sizeof(nw));
-
-	hid = nw_usb_open(0x1926, 0x0003);
-	if (!hid) {
-		fprintf(stderr, "Error opening device\n");
-		return;
-	}
-
-	nw.hid = hid;
-#if 0
-	ret = nw_usb_calibrate(nw, 0);
-	if (ret) {
-		fprintf(stderr, "Error sending calibrate cmd (%d)\n", ret);
-	}
-#endif
-	nw_usb_get_model(&nw);
-	nw_usb_get_firmware(&nw);
-	nw_usb_get_serial(&nw);
-	nw_usb_get_hw_caps(&nw);
-	nw_usb_get_rightclick_delay(&nw);
-	nw_usb_get_doubleclick_time(&nw);
-	nw_usb_get_report_mode(&nw);
-	nw_usb_get_drag_threshold(&nw);
-	nw_usb_get_buzzer_time(&nw);
-	nw_usb_get_buzzer_tone(&nw);
-	nw_usb_get_calibration_key(&nw);
-	nw_usb_get_calibration_presses(&nw);
-
-	printf("model = %d\n", nw.model);
-	printf("Firmware = %d.%02d\n", nw.firmware>>8, nw.firmware & 0xff);
-	printf("Serial = %u\n", nw.serial);
-	printf("HW capabilities = 0x%02x\n", nw.hw_caps);
-	printf("Rightclick delay = %d ms\n", nw.rightclick_delay*10);
-	printf("Doubleclick time = %d ms\n", nw.doubleclick_time*10);
-	printf("Report mode = %d\n", nw.report_mode);
-	printf("Drag threshold = %d\n", nw.drag_threshold);
-	printf("Buzzer time = %d ms\n", nw.buzzer_time*10);
-	printf("Buzzer tone = %d\n", nw.buzzer_tone);
-	printf("Calibration key = %d\n", nw.calibration_key);
-	printf("Calibration presses = %d\n", nw.calibration_presses);
-
-	nw_usb_set_rightclick_delay(&nw, nw.rightclick_delay/20);
-
-	nw_usb_get_rightclick_delay(&nw);
-	printf("Rightclick delay = %d ms\n", nw.rightclick_delay);
-
-/*
-	nw_usb_get_firmware(nw);
-	nw_usb_get_serial(hid);
-	nw_usb_get_calibration_key(hid);
-	nw_usb_get_calibration_presses(hid);
-
-	ret = nw_usb_set_buzzer_time(hid, 50);
-	if (ret) {
-		fprintf(stderr, "Error setting buzzer time (%d)\n", ret);
-	}
-
-	ret = nw_usb_set_buzzer_tone(hid, 15);
-	if (ret) {
-		fprintf(stderr, "Error setting buzzer tone (%d)\n", ret);
-	}
-*/
-	nw_usb_close(hid);
-}
-
 struct nwusb *nw_usb_init(void)
 {
 	struct nwusb *nw;
@@ -525,6 +454,32 @@ void nw_usb_deinit(struct nwusb *nw)
 
 int nw_usb_show_info(struct nwusb *nw)
 {
+	nw_usb_get_model(nw);
+	nw_usb_get_firmware(nw);
+	nw_usb_get_serial(nw);
+	nw_usb_get_hw_caps(nw);
+	nw_usb_get_rightclick_delay(nw);
+	nw_usb_get_doubleclick_time(nw);
+	nw_usb_get_report_mode(nw);
+	nw_usb_get_drag_threshold(nw);
+	nw_usb_get_buzzer_time(nw);
+	nw_usb_get_buzzer_tone(nw);
+	nw_usb_get_calibration_key(nw);
+	nw_usb_get_calibration_presses(nw);
+
+	printf("Version:\t\t%d.%02d\n", nw->firmware>>8, nw->firmware & 0xff);
+	printf("Serial:\t\t\t%u\n", nw->serial);
+	printf("Model:\t\t\t%d\n", nw->model);
+	printf("HW capabilities:\t0x%02x\n", nw->hw_caps);
+	printf("Rightclick delay:\t%d ms\n", nw->rightclick_delay*10);
+	printf("Doubleclick time:\t%d ms\n", nw->doubleclick_time*10);
+	printf("Report mode:\t\t%d\n", nw->report_mode);
+	printf("Drag threshold:\t\t%d\n", nw->drag_threshold);
+	printf("Buzzer time:\t\t%d ms\n", nw->buzzer_time*10);
+	printf("Buzzer tone:\t\t%d\n", nw->buzzer_tone);
+	printf("Calibration key:\t%d\n", nw->calibration_key);
+	printf("Calibration presses:\t%d\n", nw->calibration_presses);
+
 	return 0;
 }
 
