@@ -19,6 +19,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/select.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
 #include "nwtool-serial.h"
@@ -32,6 +34,8 @@ struct nwserial {
 	unsigned char buf[NW_SER_BUFSIZE];
 	int buf_pos;
 	int footer_pos;
+	uint32_t serial;
+	uint32_t version;
 	int ufd; /* uinput node */
 };
 
@@ -170,13 +174,12 @@ static void nw_serial_handle_packet(struct nwserial *nw)
 		fprintf(stderr, "USB cable connected, please disconnect\n");
 		break;
 
-	case 0x73: /* model info */
-		printf("Model info, serial=%u, version=%u.%02u, unknown=0x%04x\n",
-		       xi, yi>>24, (yi>>16)&0xff, yi&0xffff);
+	case 0x73: /* ts info */
+		nw->serial  = xi;
+		nw->version = yi;
 		break;
 
-	case 0x6b: /* calibation status */
-		printf("Calibration status: %f\n", y);
+	case 0x6b: /* calibration status */
 		break;
 
 	case 0x00:
@@ -185,7 +188,7 @@ static void nw_serial_handle_packet(struct nwserial *nw)
 	case 0x0a:
 	case 0x0b:
 	case 0x0c:
-		key = (type >= 0x0a) ? type-0x0a : type;
+		key = type % 10;
 		printf("Action %s LCD, x=%f, y=%f %s (%u)\n",
 		       (type >= 0x0a) ? "outside" : "inside", x, y,
 		       key ? (key==2) ? "right" : "left" : "", key);
@@ -218,6 +221,8 @@ static int nw_serial_process(struct nwserial *nw)
 			nw->buf_pos = nw->footer_pos = 0;
 		}
 
+		nw->buf_pos++;
+
 		if (nw->buf[nw->buf_pos-1] == footer[nw->footer_pos]) {
 			nw->footer_pos++;
 
@@ -237,21 +242,45 @@ static int nw_serial_process(struct nwserial *nw)
 	return 0;
 }
 
-#if 0
-static int nw_serial_get_info(int infd, int outfd)
+static int nw_serial_get_info(struct nwserial *nw)
 {
-	int n;
+	int i;
 
-	n = write(infd, "nwgs\r", 5);
-	if (n == - 1) {
+	nw->serial = nw->version = 0xdeadbeef;
+
+	if (write(nw->fd, "nwgs\r", 5) == -1) {
 		perror("write");
 		return 1;
 	}
 
-	/* todo: loop until reply received or timeout */
-	return nw_serial_process(infd, outfd);
+	for (i=0; i<10; i++) {
+		fd_set fds;
+		struct timeval tv;
+
+		FD_ZERO(&fds);
+		FD_SET(nw->fd, &fds);
+
+		tv.tv_sec = 0;
+		tv.tv_usec = 1000;
+
+		if (select(nw->fd + 1, &fds, 0, 0, &tv) == -1) {
+			perror("select");
+			return 1;
+		}
+
+		if (FD_ISSET(nw->fd, &fds)) {
+			if (nw_serial_process(nw))
+				return 1;
+
+			if (nw->serial != 0xdeadbeef
+			    || nw->version != 0xdeadbeef)
+				break;
+		}
+	}
+
+	return (nw->serial == 0xdeadbeef && nw->version == 0xdeadbeef);
 }
-#endif
+
 struct nwserial *nw_serial_init(char *device)
 {
 	struct nwserial *nw;
@@ -303,6 +332,14 @@ void nw_serial_deinit(struct nwserial *nw)
 
 int nw_serial_show_info(struct nwserial *nw)
 {
+	if (nw_serial_get_info(nw)) {
+		fprintf(stderr, "Error getting info\n");
+		return 1;
+	}
+
+	printf("Version:\t%u.%02u\nSerial:\t\t%u\n",
+	       nw->version>>24, (nw->version>>16)&0xff, nw->serial);
+
 	return 0;
 }
 
