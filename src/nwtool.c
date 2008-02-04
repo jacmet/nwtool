@@ -18,8 +18,9 @@ int nw_serial_forward(char *dev);
 static void usage(void)
 {
 	fprintf(stderr, "usage: nwtool [OPTION] ...\n"
-		"  -u, --usb\t\t\taccess touchscreen over USB\n"
 		"  -s, --serial <device>\t\taccess touchscreen over serial\n"
+#ifdef WITH_USB
+		"  -u, --usb\t\t\taccess touchscreen over USB\n"
 		"  -i, --info\t\t\tdisplay info and current settings\n"
 		"  -r, --rightclick\t\tset rightclick delay to <ms>\n"
 		"  -d, --doubleclick\t\tset doubleclick time to <ms>\n"
@@ -29,6 +30,7 @@ static void usage(void)
 		"  -t, --buzzer-tone\t\tset buzzer tone to <value>\n"
 		"  -k, --calibration-key\t\tset calibration key to <value>\n"
 		"  -p, --calibration-presses\tset nr of calibration presses\n"
+#endif
 		"  -f, --forward\t\t\tforward touchscreen events to kernel\n"
 		"  -c, --calibrate\t\tput touchscreen in calibration mode\n");
 
@@ -52,8 +54,8 @@ static int parse_nr(char *arg)
 int main(int argc, char **argv)
 {
 	static const struct option options[] = {
-		{ "usb",		no_argument,		0, 'u' },
 		{ "serial",		required_argument,	0, 's' },
+		{ "usb",		no_argument,		0, 'u' },
 		{ "info",		no_argument,	 	0, 'i' },
 		{ "rightclick",		required_argument, 	0, 'r' },
 		{ "doubleclick",	required_argument,	0, 'd' },
@@ -74,8 +76,10 @@ int main(int argc, char **argv)
 				options, 0);
 
 		switch (c) {
-		case 'u':
 		case 's':
+
+#ifdef WITH_USB
+		case 'u':
 		case 'i':
 		case 'r':
 		case 'd':
@@ -85,6 +89,7 @@ int main(int argc, char **argv)
 		case 't':
 		case 'k':
 		case 'p':
+#endif /* WITH_USB */
 		case 'f':
 		case 'c':
 			break;
