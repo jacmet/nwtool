@@ -1,5 +1,6 @@
 sbin_PROGRAMS = nwtool
 nwtool_SOURCES = nwtool-serial.c nwtool.c
+EXTRA_DIST = nwtool-serial.h nwtool-usb.h
 
 if WITH_USB
 
