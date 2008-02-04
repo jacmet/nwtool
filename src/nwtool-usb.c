@@ -115,75 +115,6 @@ static int nw_usb_recv(struct nwusb *nw, void *data)
 				  NWUSB_PACKETSIZE, 1000);
 }
 
-int nw_usb_calibrate(struct nwusb *nw, int enable)
-{
-	unsigned char buf[] = { 'C', 2, 0x21, enable ? 1 : 0 };
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
-/* unit is 1/100 sec, 0 = no right clicks */
-int nw_usb_set_rightclick_delay(struct nwusb *nw, int ms)
-{
-	unsigned char buf[] = { 'C', 2, 0x30, ms/10};
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
-/* unit is 1/100 sec, 0 = no double clicks */
-int nw_usb_set_doubleclick_time(struct nwusb *nw, int ms)
-{
-	unsigned char buf[] = { 'C', 2, 0x31, ms/10 };
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
-int nw_usb_set_drag_threshold(struct nwusb *nw, int value)
-{
-	unsigned char buf[] = { 'C', 3, 0x33, value>>8, value&0xff };
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
-/* bitmask of modes to be used */
-int nw_usb_set_report_mode(struct nwusb *nw, int mode)
-{
-	unsigned char buf[] = { 'C', 2, 0x32, mode };
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
-/* unit is 1/100 sec, 0 = disabled */
-int nw_usb_set_buzzer_time(struct nwusb *nw, int ms)
-{
-	unsigned char buf[] = { 'C', 2, 0x34, ms/10 };
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
-/* lower values means higher tones */
-int nw_usb_set_buzzer_tone(struct nwusb *nw, int value)
-{
-	unsigned char buf[] = { 'C', 2, 0x35, value };
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
-/* 0 = disabled */
-int nw_usb_set_calibration_key(struct nwusb *nw, int key)
-{
-	unsigned char buf[] = { 'C', 2, 0x40, key };
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
-int nw_usb_set_calibration_presses(struct nwusb *nw, int value)
-{
-	unsigned char buf[] = { 'C', 2, 0x41, value };
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
 static int nw_usb_hard_reset(struct nwusb *nw)
 {
 	unsigned char buf[] = { 'T', 1, 'R' };
@@ -483,3 +414,71 @@ int nw_usb_show_info(struct nwusb *nw)
 	return 0;
 }
 
+int nw_usb_calibrate(struct nwusb *nw, int enable)
+{
+	unsigned char buf[] = { 'C', 2, 0x21, enable ? 1 : 0 };
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
+
+/* unit is 1/100 sec, 0 = no right clicks */
+int nw_usb_set_rightclick_delay(struct nwusb *nw, int ms)
+{
+	unsigned char buf[] = { 'C', 2, 0x30, ms/10};
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
+
+/* unit is 1/100 sec, 0 = no double clicks */
+int nw_usb_set_doubleclick_time(struct nwusb *nw, int ms)
+{
+	unsigned char buf[] = { 'C', 2, 0x31, ms/10 };
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
+
+int nw_usb_set_drag_threshold(struct nwusb *nw, int value)
+{
+	unsigned char buf[] = { 'C', 3, 0x33, value>>8, value&0xff };
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
+
+/* bitmask of modes to be used */
+int nw_usb_set_report_mode(struct nwusb *nw, int mode)
+{
+	unsigned char buf[] = { 'C', 2, 0x32, mode };
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
+
+/* unit is 1/100 sec, 0 = disabled */
+int nw_usb_set_buzzer_time(struct nwusb *nw, int ms)
+{
+	unsigned char buf[] = { 'C', 2, 0x34, ms/10 };
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
+
+/* lower values means higher tones */
+int nw_usb_set_buzzer_tone(struct nwusb *nw, int value)
+{
+	unsigned char buf[] = { 'C', 2, 0x35, value };
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
+
+/* 0 = disabled */
+int nw_usb_set_calibration_key(struct nwusb *nw, int key)
+{
+	unsigned char buf[] = { 'C', 2, 0x40, key };
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
+
+int nw_usb_set_calibration_presses(struct nwusb *nw, int value)
+{
+	unsigned char buf[] = { 'C', 2, 0x41, value };
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
