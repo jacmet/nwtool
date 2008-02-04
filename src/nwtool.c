@@ -21,6 +21,7 @@ static void usage(void)
 {
 	fprintf(stderr, "usage: nwtool [OPTION] ...\n"
 		"  -h, --help\t\t\tshow usage info\n"
+		"  -v, --version\t\t\tshow version info\n"
 		"  -s, --serial <device>\t\taccess touchscreen over serial\n"
 #ifdef WITH_USB
 		"  -u, --usb\t\t\taccess touchscreen over USB\n"
@@ -76,6 +77,7 @@ int main(int argc, char **argv)
 {
 	static const struct option options[] = {
 		{ "help",		no_argument,	 	0, 'h' },
+		{ "version",		no_argument,	 	0, 'v' },
 		{ "serial",		required_argument,	0, 's' },
 		{ "usb",		no_argument,		0, 'u' },
 		{ "info",		no_argument,	 	0, 'i' },
@@ -97,10 +99,16 @@ int main(int argc, char **argv)
 	struct nwserial *ser = 0;
 
 	do {
-		c = getopt_long(argc, argv, "us:hir:d:D:m:b:t:k:p:fcC",
+		c = getopt_long(argc, argv, "hvus:ir:d:D:m:b:t:k:p:fcC",
 				options, 0);
 
 		switch (c) {
+		case 'v':
+			printf("nwtool version " VERSION ", (C) 2008 "
+			       "Peter Korsgaard <peter.korsgaard@barco.com>\n");
+			exit(0);
+			break;
+
 		case 's':
 			if (usb) {
 				fprintf(stderr, "Only one of -u | -s options "
