@@ -25,6 +25,7 @@
 #include <linux/uinput.h>
 #include "nwtool-serial.h"
 
+/* #define NW_SER_VERBOSE 1 */
 #define NW_SER_BAUDRATE	B115200
 #define NW_SER_BUFSIZE	256
 
@@ -189,9 +190,11 @@ static void nw_serial_handle_packet(struct nwserial *nw)
 	case 0x0b:
 	case 0x0c:
 		key = type % 10;
+#ifdef NW_SER_VERBOSE
 		printf("Action %s LCD, x=%.0f, y=%.0f %s (%u)\n",
 		       (type >= 0x0a) ? "outside" : "inside", x, y,
 		       key ? (key==2) ? "right" : "left" : "", key);
+#endif /* NW_SER_VERBOSE */
 		if (nw->ufd != -1)
 			nw_uinput_action(nw->ufd, (int)x, (int)y, key);
 		break;
