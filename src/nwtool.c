@@ -229,6 +229,15 @@ int main(int argc, char **argv)
 
 	} while (c != -1);
 
+	if (ser)
+		nw_serial_deinit(ser);
+#ifdef WITH_USB
+	else if (usb)
+		nw_usb_deinit(usb);
+#endif /* WITH_USB */
+	else
+		usage();
+
 	return 0;
 }
 
