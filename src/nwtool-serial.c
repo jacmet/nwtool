@@ -189,7 +189,7 @@ static void nw_serial_handle_packet(struct nwserial *nw)
 	case 0x0b:
 	case 0x0c:
 		key = type % 10;
-		printf("Action %s LCD, x=%f, y=%f %s (%u)\n",
+		printf("Action %s LCD, x=%.0f, y=%.0f %s (%u)\n",
 		       (type >= 0x0a) ? "outside" : "inside", x, y,
 		       key ? (key==2) ? "right" : "left" : "", key);
 		if (nw->ufd != -1)
