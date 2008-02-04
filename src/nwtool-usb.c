@@ -279,6 +279,97 @@ static int nw_usb_get_serial(HIDInterface *hid)
 	return 0;
 }
 
+static int nw_usb_get_hw_caps(HIDInterface *hid)
+{
+	unsigned char buf[] = { 'C', 1, 0x20 };
+	int ret;
+
+	ret = nw_usb_send(hid, buf, sizeof(buf));
+	if (ret)
+		return ret;
+
+	nw_usb_process(hid);
+	return 0;
+}
+
+static int nw_usb_get_rightclick_delay(HIDInterface *hid)
+{
+	unsigned char buf[] = { 'C', 1, 0x30 };
+	int ret;
+
+	ret = nw_usb_send(hid, buf, sizeof(buf));
+	if (ret)
+		return ret;
+
+	nw_usb_process(hid);
+	return 0;
+}
+
+static int nw_usb_get_doubleclick_time(HIDInterface *hid)
+{
+	unsigned char buf[] = { 'C', 1, 0x31 };
+	int ret;
+
+	ret = nw_usb_send(hid, buf, sizeof(buf));
+	if (ret)
+		return ret;
+
+	nw_usb_process(hid);
+	return 0;
+}
+
+static int nw_usb_get_report_mode(HIDInterface *hid)
+{
+	unsigned char buf[] = { 'C', 1, 0x32 };
+	int ret;
+
+	ret = nw_usb_send(hid, buf, sizeof(buf));
+	if (ret)
+		return ret;
+
+	nw_usb_process(hid);
+	return 0;
+}
+
+static int nw_usb_get_drag_threshold(HIDInterface *hid)
+{
+	unsigned char buf[] = { 'C', 1, 0x33 };
+	int ret;
+
+	ret = nw_usb_send(hid, buf, sizeof(buf));
+	if (ret)
+		return ret;
+
+	nw_usb_process(hid);
+	return 0;
+}
+
+static int nw_usb_get_buzzer_time(HIDInterface *hid)
+{
+	unsigned char buf[] = { 'C', 1, 0x34 };
+	int ret;
+
+	ret = nw_usb_send(hid, buf, sizeof(buf));
+	if (ret)
+		return ret;
+
+	nw_usb_process(hid);
+	return 0;
+}
+
+static int nw_usb_get_buzzer_tone(HIDInterface *hid)
+{
+	unsigned char buf[] = { 'C', 1, 0x35 };
+	int ret;
+
+	ret = nw_usb_send(hid, buf, sizeof(buf));
+	if (ret)
+		return ret;
+
+	nw_usb_process(hid);
+	return 0;
+}
+
 static int nw_usb_get_calibration_key(HIDInterface *hid)
 {
 	unsigned char buf[] = { 'C', 1, 0x40 };
