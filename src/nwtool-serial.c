@@ -200,9 +200,17 @@ static void nw_serial_handle_packet(struct nwserial *nw)
 	}
 }
 
-static void nw_serial_parse(struct nwserial *nw, char *data, int length)
+static int nw_serial_process(struct nwserial *nw)
 {
 	static const char footer[] = "<END>\r";
+	int length;
+
+	length = read(nw->fd, &nw->buf[nw->buf_pos],
+		      sizeof(nw->buf) - nw->buf_pos);
+	if (length == -1) {
+		perror("read");
+		return 1;
+	}
 
 	while (length) {
 		if (nw->buf_pos >= sizeof(nw->buf)) {
@@ -210,13 +218,13 @@ static void nw_serial_parse(struct nwserial *nw, char *data, int length)
 			nw->buf_pos = nw->footer_pos = 0;
 		}
 
-		nw->buf[nw->buf_pos++] = *data++;
-
 		if (nw->buf[nw->buf_pos-1] == footer[nw->footer_pos]) {
 			nw->footer_pos++;
 
 			if (nw->footer_pos == sizeof(footer)-1) {
 				nw_serial_handle_packet(nw);
+				memmove(nw->buf, &nw->buf[nw->buf_pos],
+					sizeof(nw->buf) - nw->buf_pos);
 				nw->buf_pos = nw->footer_pos = 0;
 			}
 		} else {
@@ -225,22 +233,10 @@ static void nw_serial_parse(struct nwserial *nw, char *data, int length)
 
 		length--;
 	}
-}
 
-static int nw_serial_process(struct nwserial *nw)
-{
-	char data[NW_SER_BUFSIZE];
-	int n;
-
-	n = read(nw->fd, data, sizeof(data));
-	if (n == -1) {
-		perror("read");
-		return 1;
-	}
-
-	nw_serial_parse(nw, data, n);
 	return 0;
 }
+
 #if 0
 static int nw_serial_get_info(int infd, int outfd)
 {
