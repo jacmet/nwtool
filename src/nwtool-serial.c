@@ -29,7 +29,7 @@
 struct nwserial {
 	int fd;
 	struct termios orig_tio;
-	char buf[NW_SER_BUFSIZE];
+	unsigned char buf[NW_SER_BUFSIZE];
 	int buf_pos;
 	int footer_pos;
 	int ufd; /* uinput node */
@@ -146,7 +146,7 @@ static void nw_uinput_action(int fd, int x, int y, int button)
 			perror("uinput_action");
 }
 
-static void nw_handle_packet(void *packet, int fd)
+static void nw_serial_handle_packet(struct nwserial *nw)
 {
 	float x, y;
 	uint32_t xi, yi;
@@ -159,11 +159,11 @@ static void nw_handle_packet(void *packet, int fd)
 	   b9..14: footer '<END>\r'
 	*/
 
-	memcpy(&xi, packet+0, sizeof(xi));
+	memcpy(&xi, nw->buf+0, sizeof(xi));
 	xi = ntohl(xi); x = *(float*)&xi;
-	memcpy(&yi, packet+4, sizeof(yi));
+	memcpy(&yi, nw->buf+4, sizeof(yi));
 	yi = ntohl(yi); y = *(float*)&yi;
-	type = *(unsigned char*)(packet+8);
+	type = nw->buf[8];
 
 	switch (type) {
 	case 0x75:
@@ -189,7 +189,8 @@ static void nw_handle_packet(void *packet, int fd)
 		printf("Action %s LCD, x=%f, y=%f %s (%u)\n",
 		       (type >= 0x0a) ? "outside" : "inside", x, y,
 		       key ? (key==2) ? "right" : "left" : "", key);
-		nw_uinput_action(fd, (int)x, (int)y, key);
+		if (nw->ufd != -1)
+			nw_uinput_action(nw->ufd, (int)x, (int)y, key);
 		break;
 
 	default:
@@ -215,7 +216,7 @@ static void nw_serial_parse(struct nwserial *nw, char *data, int length)
 			nw->footer_pos++;
 
 			if (nw->footer_pos == sizeof(footer)-1) {
-				nw_handle_packet(nw->buf, nw->ufd);
+				nw_serial_handle_packet(nw);
 				nw->buf_pos = nw->footer_pos = 0;
 			}
 		} else {
