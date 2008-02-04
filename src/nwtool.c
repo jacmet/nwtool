@@ -34,7 +34,9 @@ static void usage(void)
 		"  -p, --calibration-presses\tset nr of calibration presses\n"
 #endif
 		"  -f, --forward\t\t\tforward touchscreen events to kernel\n"
-		"  -c, --calibrate\t\tput touchscreen in calibration mode\n");
+		"  -c, --calibrate\t\tput touchscreen in calibration mode\n"
+		"  -C, --cancel-calibration\t\tput touchscreen out of "
+		"calibration mode\n");
 
 	exit(1);
 }
@@ -85,6 +87,7 @@ int main(int argc, char **argv)
 		{ "calibration-presses", required_argument,	0, 'p' },
 		{ "forward", 		no_argument,		0, 'f' },
 		{ "calibrate",		no_argument,		0, 'c' },
+		{ "cancel-calibration",	no_argument,		0, 'C' },
 		{ 0, 0, 0, 0 }
 	};
 	int c;
@@ -92,7 +95,7 @@ int main(int argc, char **argv)
 	struct nwserial *ser = 0;
 
 	do {
-		c = getopt_long(argc, argv, "us:ir:d:D:m:b:t:k:p:fc",
+		c = getopt_long(argc, argv, "us:ir:d:D:m:b:t:k:p:fcC",
 				options, 0);
 
 		switch (c) {
@@ -203,11 +206,12 @@ int main(int argc, char **argv)
 			break;
 
 		case 'c':
+		case 'C':
 			if (ser)
-				nw_serial_calibrate(ser, 1);
+				nw_serial_calibrate(ser, c == 'c');
 #ifdef WITH_USB
 			else if (usb)
-				nw_usb_calibrate(usb, 1);
+				nw_usb_calibrate(usb, c == 'c');
 #endif /* WITH_USB */
 			else
 				missing(NW_NEED_USB|NW_NEED_SERIAL);
