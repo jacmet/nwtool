@@ -9,14 +9,49 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <getopt.h>
 
 void nw_usb_test(void);
 int nw_serial_forward(char *dev);
 
+static void usage(void)
+{
+	fprintf(stderr, "usage: nwtool [OPTION] ...\n"
+		"  -u, --usb\t\t\taccess touchscreen over USB\n"
+		"  -s, --serial <device>\t\taccess touchscreen over serial\n"
+		"  -i, --info\t\t\tdisplay info and current settings\n"
+		"  -r, --rightclick\t\tset rightclick delay to <ms>\n"
+		"  -d, --doubleclick\t\tset doubleclick time to <ms>\n"
+		"  -D, --drag-threshold\t\tset drag threshold to <value>\n"
+		"  -m, --report-mode\t\tset reporting mode to <mode>\n"
+		"  -b, --buzzer-time\t\tset buzzer time to <ms>\n"
+		"  -t, --buzzer-tone\t\tset buzzer tone to <value>\n"
+		"  -k, --calibration-key\t\tset calibration key to <value>\n"
+		"  -p, --calibration-presses\tset nr of calibration presses\n"
+		"  -f, --forward\t\t\tforward touchscreen events to kernel\n"
+		"  -c, --calibrate\t\tput touchscreen in calibration mode\n");
+
+	exit(1);
+}
+
+static int parse_nr(char *arg)
+{
+	long val;
+	char *endp;
+
+	val = strtol(arg, &endp, 0);
+	if (*endp) {
+		fprintf(stderr, "invalid number '%s'\n", arg);
+		usage();
+	}
+
+	return val;
+}
+
 int main(int argc, char **argv)
 {
-	static struct option options[] = {
+	static const struct option options[] = {
 		{ "usb",		no_argument,		0, 'u' },
 		{ "serial",		required_argument,	0, 's' },
 		{ "info",		no_argument,	 	0, 'i' },
@@ -35,8 +70,6 @@ int main(int argc, char **argv)
 	int c;
 
 	do {
-		int c;
-
 		c = getopt_long(argc, argv, "us:ir:d:D:m:b:t:k:p:fc",
 				options, 0);
 
@@ -60,7 +93,7 @@ int main(int argc, char **argv)
 			break;
 
 		default:
-			fprintf(stderr, "Usage:\n");
+			usage();
 			break;
 		}
 
