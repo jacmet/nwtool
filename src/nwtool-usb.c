@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <hid.h>
+#include "nwtool-usb.h"
 
 #define NWUSB_PACKETSIZE		64
 
@@ -114,7 +115,7 @@ static int nw_usb_recv(struct nwusb *nw, void *data)
 				  NWUSB_PACKETSIZE, 1000);
 }
 
-static int nw_usb_calibrate(struct nwusb *nw, int enable)
+int nw_usb_calibrate(struct nwusb *nw, int enable)
 {
 	unsigned char buf[] = { 'C', 2, 0x21, enable ? 1 : 0 };
 
@@ -122,46 +123,46 @@ static int nw_usb_calibrate(struct nwusb *nw, int enable)
 }
 
 /* unit is 1/100 sec, 0 = no right clicks */
-static int nw_usb_set_rightclick_delay(struct nwusb *nw, unsigned char value)
+int nw_usb_set_rightclick_delay(struct nwusb *nw, int ms)
 {
-	unsigned char buf[] = { 'C', 2, 0x30, value };
+	unsigned char buf[] = { 'C', 2, 0x30, ms/10};
 
 	return nw_usb_send(nw, buf, sizeof(buf));
 }
 
 /* unit is 1/100 sec, 0 = no double clicks */
-static int nw_usb_set_doubleclick_time(struct nwusb *nw, unsigned char value)
+int nw_usb_set_doubleclick_time(struct nwusb *nw, int ms)
 {
-	unsigned char buf[] = { 'C', 2, 0x31, value };
+	unsigned char buf[] = { 'C', 2, 0x31, ms/10 };
 
 	return nw_usb_send(nw, buf, sizeof(buf));
 }
 
-/* bitmask of modes to be used */
-static int nw_usb_set_report_mode(struct nwusb *nw, unsigned char value)
-{
-	unsigned char buf[] = { 'C', 2, 0x32, value };
-
-	return nw_usb_send(nw, buf, sizeof(buf));
-}
-
-static int nw_usb_set_drag_threshold(struct nwusb *nw, unsigned short value)
+int nw_usb_set_drag_threshold(struct nwusb *nw, int value)
 {
 	unsigned char buf[] = { 'C', 3, 0x33, value>>8, value&0xff };
 
 	return nw_usb_send(nw, buf, sizeof(buf));
 }
 
-/* unit is 1/100 sec, 0 = disabled */
-static int nw_usb_set_buzzer_time(struct nwusb *nw, unsigned char value)
+/* bitmask of modes to be used */
+int nw_usb_set_report_mode(struct nwusb *nw, int mode)
 {
-	unsigned char buf[] = { 'C', 2, 0x34, value };
+	unsigned char buf[] = { 'C', 2, 0x32, mode };
+
+	return nw_usb_send(nw, buf, sizeof(buf));
+}
+
+/* unit is 1/100 sec, 0 = disabled */
+int nw_usb_set_buzzer_time(struct nwusb *nw, int ms)
+{
+	unsigned char buf[] = { 'C', 2, 0x34, ms/10 };
 
 	return nw_usb_send(nw, buf, sizeof(buf));
 }
 
 /* lower values means higher tones */
-static int nw_usb_set_buzzer_tone(struct nwusb *nw, unsigned char value)
+int nw_usb_set_buzzer_tone(struct nwusb *nw, int value)
 {
 	unsigned char buf[] = { 'C', 2, 0x35, value };
 
@@ -169,16 +170,16 @@ static int nw_usb_set_buzzer_tone(struct nwusb *nw, unsigned char value)
 }
 
 /* 0 = disabled */
-static int nw_usb_set_calibration_key(struct nwusb *nw, unsigned char key)
+int nw_usb_set_calibration_key(struct nwusb *nw, int key)
 {
 	unsigned char buf[] = { 'C', 2, 0x40, key };
 
 	return nw_usb_send(nw, buf, sizeof(buf));
 }
 
-static int nw_usb_set_calibration_presses(struct nwusb *nw, unsigned char n)
+int nw_usb_set_calibration_presses(struct nwusb *nw, int value)
 {
-	unsigned char buf[] = { 'C', 2, 0x41, n };
+	unsigned char buf[] = { 'C', 2, 0x41, value };
 
 	return nw_usb_send(nw, buf, sizeof(buf));
 }
@@ -495,3 +496,35 @@ void nw_usb_test(void)
 */
 	nw_usb_close(hid);
 }
+
+struct nwusb *nw_usb_init(void)
+{
+	struct nwusb *nw;
+
+	nw = calloc(1, sizeof(struct nwusb));
+	if (!nw) {
+		perror("malloc");
+		return 0;
+	}
+
+	nw->hid = nw_usb_open(0x1926, 0x0003);
+	if (!nw->hid) {
+		fprintf(stderr, "Error opening device\n");
+		free(nw);
+		return 0;
+	}
+
+	return nw;
+}
+
+void nw_usb_deinit(struct nwusb *nw)
+{
+	nw_usb_close(nw->hid);
+	free(nw);
+}
+
+int nw_usb_show_info(struct nwusb *nw)
+{
+	return 0;
+}
+
