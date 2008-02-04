@@ -366,6 +366,8 @@ int nw_serial_forward(struct nwserial *nw)
 		nw_serial_process(nw);
 	}
 
+	nw_uinput_close(nw->ufd);
+
 	return 0;
 }
 
