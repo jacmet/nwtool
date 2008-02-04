@@ -258,13 +258,13 @@ static void nw_usb_parse(struct nwusb *nw, unsigned char *buf)
 
 static int nw_usb_poll(struct nwusb *nw, int msg)
 {
-	char buf[NWUSB_PACKETSIZE];
+	unsigned char buf[NWUSB_PACKETSIZE];
 	int i;
 
 	nw->got &= ~msg;
 
 	for (i=0; i<10; i++) {
-		if (!nw_usb_recv(nw->hid, buf))
+		if (!nw_usb_recv(nw, buf))
 			nw_usb_parse(nw, buf);
 		if (nw->got & msg)
 			return 1;
