@@ -9,3 +9,22 @@ using uinput.
 
 USB first of all needs to detach the configuration interface of the
 USB device from the HID driver, so userspace/libhid can access it.
+
+Usage:
+
+nwtool [-u|-s <device>] [-i] [-r <ms>] [-d <ms>] [-D <value>] [-m <mode>]
+        [-b <ms>] [-t <value>] [-k <value>] [-p <nr>] [-f] [-c]
+
+-u|--usb   	   	  access touchscreen over USB
+-s|--serial <device>	  access touchscreen over serial <device>
+-i|--info   	  	  display info and current settings
+-r|--rightclick	  	  set rightclick delay to <ms>
+-d|--doubleclick  	  set doubleclick time to <ms>
+-D|--drag-threshold	  set drag threshold to <value>
+-m|--report-mode	  set reporting mode to <mode>
+-b|--buzzer-time	  set buzzer time to <ms>
+-t|--buzzer-tone	  set buzzer tone to <value>
+-k|--calibration-key	  set calibration key to <value>
+-p|--calibration-presses  set nr of calibration presses to <nr>
+-f|--forward		  forward touchscreen events to kernel
+-c|--calibrate		  put touchscreen in calibration mode
