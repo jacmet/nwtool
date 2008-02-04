@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
 #include <errno.h>
@@ -22,6 +23,11 @@
 #include <sys/ioctl.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
+
+struct nwserial {
+	int fd;
+	struct termios orig_tio;
+};
 
 static struct termios orig_tio;
 
@@ -285,20 +291,6 @@ static int nw_serial_get_info(int infd, int outfd)
 	return nw_serial_process(infd, outfd);
 }
 
-static int nw_serial_calibrate(int infd, int outfd, int enable)
-
-{	int n;
-
-	n = write(infd, enable ? "nwk1\r" : "nwk0\r", 5);
-	if (n == - 1) {
-		perror("write");
-		return 1;
-	}
-
-	/* todo: loop until reply received or timeout */
-	return nw_serial_process(infd, outfd);
-}
-
 int nw_serial_forward(char *dev)
 {
 	int infd, outfd;
@@ -314,4 +306,62 @@ int nw_serial_forward(char *dev)
 	}
 
 	return 0;
+}
+
+struct nwserial *nw_serial_init(char *device)
+{
+	struct nwserial *nw;
+	struct termios tio;
+	int fd;
+
+	nw = malloc(sizeof(struct nwserial));
+	if (!nw) {
+		perror("malloc");
+		return 0;
+	}
+
+	nw->fd = open(device, O_RDWR);
+	if (nw->fd == -1) {
+		perror(device);
+		free(nw);
+		return 0;
+	}
+
+	tcgetattr(fd, &nw->orig_tio);
+	tio = nw->orig_tio;
+	tio.c_lflag &= ~(ICANON|ECHO);
+	tio.c_iflag &= ~(IXON|ICRNL);
+	tio.c_oflag &= ~(ONLCR);
+	tio.c_cc[VMIN] = 1;
+	tio.c_cc[VTIME] = 0;
+
+	cfsetispeed(&tio, NW_BAUDRATE);
+	cfsetospeed(&tio, NW_BAUDRATE);
+
+	if (tcsetattr(nw->fd, TCSANOW, &tio)) {
+		perror("tcsetattr");
+		close(nw->fd);
+		free(nw);
+		return 0;
+	}
+
+	return nw;
+}
+
+int nw_serial_show_info(struct nwserial *nw)
+{
+	return 0;
+}
+
+int nw_serial_calibrate(struct nwserial *nw, int enable)
+{	int n;
+
+	n = write(nw->fd, enable ? "nwk1\r" : "nwk0\r", 5);
+	if (n == - 1) {
+		perror("write");
+		return 1;
+	}
+
+	/* todo: loop until reply received or timeout */
+	return nw_serial_process(nw->fd, -1);
 }

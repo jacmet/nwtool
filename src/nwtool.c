@@ -11,9 +11,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include "nwtool-usb.h"
+#include "nwtool-serial.h"
 
-void nw_usb_test(void);
-int nw_serial_forward(char *dev);
+#define NW_NEED_SERIAL	1
+#define NW_NEED_USB	1
 
 static void usage(void)
 {
@@ -37,6 +39,7 @@ static void usage(void)
 	exit(1);
 }
 
+#ifdef WITH_USB
 static int parse_nr(char *arg)
 {
 	long val;
@@ -49,6 +52,21 @@ static int parse_nr(char *arg)
 	}
 
 	return val;
+}
+#endif /* WITH_USB */
+
+static void missing(int need)
+{
+#ifndef WITH_USB
+	need &= ~NW_NEED_USB;
+#endif /* WITH_USB */
+
+	if (need == (NW_NEED_USB|NW_NEED_SERIAL))
+		fprintf(stderr, "-u or -s options required\n");
+	else
+		fprintf(stderr, "%s option required\n",
+			need == NW_NEED_USB ? "-u" : "-s");
+	usage();
 }
 
 int main(int argc, char **argv)
@@ -70,6 +88,8 @@ int main(int argc, char **argv)
 		{ 0, 0, 0, 0 }
 	};
 	int c;
+	struct nwusb *usb = 0;
+	struct nwserial *ser = 0;
 
 	do {
 		c = getopt_long(argc, argv, "us:ir:d:D:m:b:t:k:p:fc",
@@ -77,21 +97,120 @@ int main(int argc, char **argv)
 
 		switch (c) {
 		case 's':
+			if (usb) {
+				fprintf(stderr, "Only one of -u | -s options "
+					"allowed\n");
+				usage();
+			}
+
+			ser = nw_serial_init(optarg);
+			if (!ser)
+				usage();
+			break;
 
 #ifdef WITH_USB
 		case 'u':
+			if (ser) {
+				fprintf(stderr, "Only one of -u | -s options "
+					"allowed\n");
+				usage();
+			}
+
+			usb = nw_usb_init();
+			if (!usb)
+				usage();
+			break;
+#endif /* WITH_USB */
+
 		case 'i':
+			if (ser)
+				nw_serial_show_info(ser);
+#ifdef WITH_USB
+			else if (usb)
+				nw_usb_show_info(usb);
+#endif /* WITH_USB */
+			else
+				missing(NW_NEED_USB|NW_NEED_SERIAL);
+			break;
+#ifdef WITH_USB
 		case 'r':
+			if (usb)
+				nw_usb_set_rightclick_delay(usb,
+							    parse_nr(optarg));
+			else
+				missing(NW_NEED_USB);
+			break;
+
 		case 'd':
+			if (usb)
+				nw_usb_set_doubleclick_time(usb,
+							    parse_nr(optarg));
+			else
+				missing(NW_NEED_USB);
+			break;
+
 		case 'D':
+			if (usb)
+				nw_usb_set_drag_threshold(usb,
+							  parse_nr(optarg));
+			else
+				missing(NW_NEED_USB);
+			break;
+
 		case 'm':
+			if (usb)
+				nw_usb_set_report_mode(usb, parse_nr(optarg));
+			else
+				missing(NW_NEED_USB);
+			break;
+
 		case 'b':
+			if (usb)
+				nw_usb_set_buzzer_time(usb, parse_nr(optarg));
+			else
+				missing(NW_NEED_USB);
+			break;
+
 		case 't':
+			if (usb)
+				nw_usb_set_buzzer_tone(usb, parse_nr(optarg));
+			else
+				missing(NW_NEED_USB);
+			break;
+
 		case 'k':
+			if (usb)
+				nw_usb_set_calibration_key(usb,
+							   parse_nr(optarg));
+			else
+				missing(NW_NEED_USB);
+			break;
+
 		case 'p':
+			if (usb)
+				nw_usb_set_calibration_presses(
+					usb, parse_nr(optarg));
+			else
+				missing(NW_NEED_USB);
+			break;
+
 #endif /* WITH_USB */
 		case 'f':
+			if (ser)
+				nw_serial_forward(ser);
+			else
+				missing(NW_NEED_SERIAL);
+			break;
+
 		case 'c':
+			if (ser)
+				nw_serial_calibrate(ser, 1);
+#ifdef WITH_USB
+			else if (usb)
+				nw_usb_calibrate(usb, 1);
+#endif /* WITH_USB */
+			else
+				missing(NW_NEED_USB|NW_NEED_SERIAL);
 			break;
 
 		case -1:
@@ -103,10 +222,7 @@ int main(int argc, char **argv)
 		}
 
 	} while (c != -1);
-#ifdef WITH_USB
-	nw_usb_test();
-#endif
-//	nw_serial_forward("/dev/ttyUSB0");
+
 	return 0;
 }
 
