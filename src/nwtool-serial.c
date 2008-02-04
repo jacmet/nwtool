@@ -8,8 +8,6 @@
  * kind, whether express or implied.
  */
 
-#define NW_BAUDRATE B115200
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -23,50 +21,19 @@
 #include <sys/ioctl.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
+#include "nwtool-serial.h"
+
+#define NW_SER_BAUDRATE	B115200
+#define NW_SER_BUFSIZE	256
 
 struct nwserial {
 	int fd;
 	struct termios orig_tio;
+	char buf[NW_SER_BUFSIZE];
+	int buf_pos;
+	int footer_pos;
+	int ufd; /* uinput node */
 };
-
-static struct termios orig_tio;
-
-static int nw_serial_open(char *dev)
-{
-	struct termios tio;
-	int fd;
-
-	fd = open(dev, O_RDWR);
-	if (fd == -1) {
-		perror(dev);
-		return 0;
-	}
-
-	tcgetattr(fd, &orig_tio);
-	tio = orig_tio;
-	tio.c_lflag &= ~(ICANON|ECHO);
-	tio.c_iflag &= ~(IXON|ICRNL);
-	tio.c_oflag &= ~(ONLCR);
-	tio.c_cc[VMIN] = 1;
-	tio.c_cc[VTIME] = 0;
-
-	cfsetispeed(&tio, NW_BAUDRATE);
-	cfsetospeed(&tio, NW_BAUDRATE);
-
-	if (tcsetattr(fd, TCSANOW, &tio)) {
-		perror("tcsetattr");
-		close(fd);
-		return 0;
-	}
-
-	return fd;
-}
-
-static void nw_serial_close(int fd)
-{
-	tcsetattr(fd, TCSANOW, &orig_tio);
-	close(fd);
-}
 
 static int nw_uinput_open(void)
 {
@@ -232,51 +199,48 @@ static void nw_handle_packet(void *packet, int fd)
 	}
 }
 
-static char buf[256];
-static int buf_pos, footer_pos;
-
-static const char footer[] = "<END>\r";
-
-static void nw_serial_parse(char *data, int length, int fd)
+static void nw_serial_parse(struct nwserial *nw, char *data, int length)
 {
+	static const char footer[] = "<END>\r";
+
 	while (length) {
-		if (buf_pos >= sizeof(buf)) {
+		if (nw->buf_pos >= sizeof(nw->buf)) {
 			fprintf(stderr, "Overflow, resetting buffer\n");
-			buf_pos = footer_pos = 0;
+			nw->buf_pos = nw->footer_pos = 0;
 		}
 
-		buf[buf_pos++] = *data++;
+		nw->buf[nw->buf_pos++] = *data++;
 
-		if (buf[buf_pos-1] == footer[footer_pos]) {
-			footer_pos++;
+		if (nw->buf[nw->buf_pos-1] == footer[nw->footer_pos]) {
+			nw->footer_pos++;
 
-			if (footer_pos == sizeof(footer)-1) {
-				nw_handle_packet(buf, fd);
-				buf_pos = footer_pos = 0;
+			if (nw->footer_pos == sizeof(footer)-1) {
+				nw_handle_packet(nw->buf, nw->ufd);
+				nw->buf_pos = nw->footer_pos = 0;
 			}
 		} else {
-			footer_pos = 0;
+			nw->footer_pos = 0;
 		}
 
 		length--;
 	}
 }
 
-static int nw_serial_process(int infd, int outfd)
+static int nw_serial_process(struct nwserial *nw)
 {
-	char data[256];
+	char data[NW_SER_BUFSIZE];
 	int n;
 
-	n = read(infd, data, sizeof(data));
+	n = read(nw->fd, data, sizeof(data));
 	if (n == -1) {
 		perror("read");
 		return 1;
 	}
 
-	nw_serial_parse(data, n, outfd);
+	nw_serial_parse(nw, data, n);
 	return 0;
 }
-
+#if 0
 static int nw_serial_get_info(int infd, int outfd)
 {
 	int n;
@@ -290,31 +254,14 @@ static int nw_serial_get_info(int infd, int outfd)
 	/* todo: loop until reply received or timeout */
 	return nw_serial_process(infd, outfd);
 }
-
-int nw_serial_forward(char *dev)
-{
-	int infd, outfd;
-
-	infd = nw_serial_open(dev);
-	outfd = nw_uinput_open();
-
-	if (infd == -1 || outfd == -1)
-		return 1;
-
-	while (1) {
-		nw_serial_process(infd, outfd);
-	}
-
-	return 0;
-}
-
+#endif
 struct nwserial *nw_serial_init(char *device)
 {
 	struct nwserial *nw;
 	struct termios tio;
 	int fd;
 
-	nw = malloc(sizeof(struct nwserial));
+	nw = calloc(1, sizeof(struct nwserial));
 	if (!nw) {
 		perror("malloc");
 		return 0;
@@ -335,8 +282,8 @@ struct nwserial *nw_serial_init(char *device)
 	tio.c_cc[VMIN] = 1;
 	tio.c_cc[VTIME] = 0;
 
-	cfsetispeed(&tio, NW_BAUDRATE);
-	cfsetospeed(&tio, NW_BAUDRATE);
+	cfsetispeed(&tio, NW_SER_BAUDRATE);
+	cfsetospeed(&tio, NW_SER_BAUDRATE);
 
 	if (tcsetattr(nw->fd, TCSANOW, &tio)) {
 		perror("tcsetattr");
@@ -345,7 +292,16 @@ struct nwserial *nw_serial_init(char *device)
 		return 0;
 	}
 
+	nw->ufd = -1;
+
 	return nw;
+}
+
+void nw_serial_deinit(struct nwserial *nw)
+{
+	tcsetattr(nw->fd, TCSANOW, &nw->orig_tio);
+	close(nw->fd);
+	free(nw);
 }
 
 int nw_serial_show_info(struct nwserial *nw)
@@ -362,6 +318,20 @@ int nw_serial_calibrate(struct nwserial *nw, int enable)
 		return 1;
 	}
 
-	/* todo: loop until reply received or timeout */
-	return nw_serial_process(nw->fd, -1);
+	return 0;
 }
+
+int nw_serial_forward(struct nwserial *nw)
+{
+	nw->ufd = nw_uinput_open();
+
+	if (nw->ufd == -1)
+		return 1;
+
+	while (1) {
+		nw_serial_process(nw);
+	}
+
+	return 0;
+}
+
