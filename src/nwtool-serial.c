@@ -56,7 +56,7 @@ static int nw_uinput_open(void)
 
 	if (fd == -1) {
 		perror("/dev/uinput");
-		return 0;
+		return -1;
 	}
 
 	if (ioctl(fd, UI_SET_PHYS, "ttySx"))
@@ -66,21 +66,21 @@ static int nw_uinput_open(void)
 		if (ioctl(fd, UI_SET_EVBIT, ev_bits[i])) {
 			perror("UI_SET_EVBIT");
 			close(fd);
-			return 0;
+			return -1;
 		}
 
 	for (i=0; i< sizeof(key_bits)/sizeof(key_bits[0]); i++)
 		if (ioctl(fd, UI_SET_KEYBIT, key_bits[i])) {
 			perror("UI_SET_KEYBIT");
 			close(fd);
-			return 0;
+			return -1;
 		}
 
 	for (i=0; i< sizeof(abs_bits)/sizeof(abs_bits[0]); i++)
 		if (ioctl(fd, UI_SET_ABSBIT, abs_bits[i])) {
 			perror("UI_SET_ABSBIT");
 			close(fd);
-			return 0;
+			return -1;
 		}
 
 	memset(&uinput, 0, sizeof(uinput));
@@ -97,13 +97,13 @@ static int nw_uinput_open(void)
 	if (write(fd, &uinput, sizeof(uinput)) != sizeof(uinput)) {
 		perror("uinput write");
 		close(fd);
-		return 0;
+		return -1;
 	}
 
 	if (ioctl(fd, UI_DEV_CREATE, 0)) {
 		perror("UI_DEV_CREATE");
 		close(fd);
-		return 0;
+		return -1;
 	}
 
 	return fd;
