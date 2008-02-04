@@ -20,6 +20,7 @@
 static void usage(void)
 {
 	fprintf(stderr, "usage: nwtool [OPTION] ...\n"
+		"  -h, --help\t\t\tshow usage info\n"
 		"  -s, --serial <device>\t\taccess touchscreen over serial\n"
 #ifdef WITH_USB
 		"  -u, --usb\t\t\taccess touchscreen over USB\n"
@@ -35,7 +36,7 @@ static void usage(void)
 #endif
 		"  -f, --forward\t\t\tforward touchscreen events to kernel\n"
 		"  -c, --calibrate\t\tput touchscreen in calibration mode\n"
-		"  -C, --cancel-calibration\t\tput touchscreen out of "
+		"  -C, --cancel-calibration\tput touchscreen out of "
 		"calibration mode\n");
 
 	exit(1);
@@ -74,6 +75,7 @@ static void missing(int need)
 int main(int argc, char **argv)
 {
 	static const struct option options[] = {
+		{ "help",		no_argument,	 	0, 'h' },
 		{ "serial",		required_argument,	0, 's' },
 		{ "usb",		no_argument,		0, 'u' },
 		{ "info",		no_argument,	 	0, 'i' },
@@ -95,7 +97,7 @@ int main(int argc, char **argv)
 	struct nwserial *ser = 0;
 
 	do {
-		c = getopt_long(argc, argv, "us:ir:d:D:m:b:t:k:p:fcC",
+		c = getopt_long(argc, argv, "us:hir:d:D:m:b:t:k:p:fcC",
 				options, 0);
 
 		switch (c) {
