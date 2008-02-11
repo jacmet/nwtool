@@ -288,7 +288,6 @@ struct nwserial *nw_serial_init(char *device)
 {
 	struct nwserial *nw;
 	struct termios tio;
-	int fd;
 
 	nw = calloc(1, sizeof(struct nwserial));
 	if (!nw) {
@@ -303,7 +302,12 @@ struct nwserial *nw_serial_init(char *device)
 		return 0;
 	}
 
-	tcgetattr(fd, &nw->orig_tio);
+	if (tcgetattr(nw->fd, &nw->orig_tio)) {
+		perror("tcgetattr");
+		free(nw);
+		return 0;
+	}
+
 	tio = nw->orig_tio;
 	tio.c_lflag &= ~(ICANON|ECHO);
 	tio.c_iflag &= ~(IXON|ICRNL);
