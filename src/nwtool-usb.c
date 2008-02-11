@@ -337,7 +337,11 @@ struct nwusb *nw_usb_init(void)
 		return 0;
 	}
 
-	nw->hid = nw_usb_open(0x1926, 0x0003);
+	nw->hid = nw_usb_open(0x1926, 0x0001);
+	if (!nw->hid) {
+		nw->hid = nw_usb_open(0x1926, 0x0003);
+	}
+
 	if (!nw->hid) {
 		fprintf(stderr, "Error opening device\n");
 		free(nw);
