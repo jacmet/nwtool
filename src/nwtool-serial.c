@@ -219,7 +219,7 @@ static int nw_serial_process(struct nwserial *nw)
 	}
 
 	if (length == 0)
-		return 0; /* eof, disconnected */
+		return 2; /* eof, disconnected */
 
 	while (length) {
 		if (nw->buf_pos >= sizeof(nw->buf)) {
@@ -367,14 +367,16 @@ int nw_serial_calibrate(struct nwserial *nw, int enable)
 
 int nw_serial_forward(struct nwserial *nw)
 {
+	int res;
+
 	nw->ufd = nw_uinput_open();
 
 	if (nw->ufd == -1)
 		return 1;
 
-	while (1) {
-		nw_serial_process(nw);
-	}
+	do {
+		res = nw_serial_process(nw);
+	} while (res == 0);
 
 	nw_uinput_close(nw->ufd);
 
