@@ -218,6 +218,9 @@ static int nw_serial_process(struct nwserial *nw)
 		return 1;
 	}
 
+	if (length == 0)
+		return 0; /* eof, disconnected */
+
 	while (length) {
 		if (nw->buf_pos >= sizeof(nw->buf)) {
 			fprintf(stderr, "Overflow, resetting buffer\n");
