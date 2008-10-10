@@ -1,0 +1,11 @@
+nwtool cmdline program.
+
+similar options for serial and USB support - Implemented by function
+pointers (init functions return a struct nwtool_ops).
+
+Serial stuff is pretty straight forward as the protocol is so limited,
+but it also has to support a special mode to create an input device
+using uinput.
+
+USB first of all needs to detach the configuration interface of the
+USB device from the HID driver, so userspace/libhid can access it.
