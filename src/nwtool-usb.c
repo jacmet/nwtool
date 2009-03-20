@@ -34,9 +34,8 @@ struct nwusb {
 	HIDInterface *hid;
 };
 
-static HIDInterface *nw_usb_open(unsigned short vid, unsigned short pid)
+static int nw_usb_open(unsigned short vid, unsigned short pid, struct nwusb *nw)
 {
-	HIDInterface *hid;
 	HIDInterfaceMatcher matcher;
 	int ret;
 
@@ -50,28 +49,28 @@ static HIDInterface *nw_usb_open(unsigned short vid, unsigned short pid)
 		return 0;
 	}
 
-	hid = hid_new_HIDInterface();
-	if (!hid) {
+	nw->hid = hid_new_HIDInterface();
+	if (!nw->hid) {
 		fprintf(stderr, "new_HID error\n");
 		goto err_new_intf;
 	}
 
 	/* todo: somehow parse HID description to figure out correct interface
 	   number instead */
-	ret = hid_force_open(hid, 1, &matcher, 3);
+	ret = hid_force_open(nw->hid, 1, &matcher, 3);
 	if (ret)
 		goto err_force_open;
 
-	return hid;
+	return 0;
 
 err_force_open:
-	fprintf(stderr, "hid_force_open error\n");
-	hid_delete_HIDInterface(&hid);
+	hid_delete_HIDInterface(&nw->hid);
 
 err_new_intf:
 	hid_cleanup();
+	nw->hid = NULL;
 
-	return 0;
+	return ret;
 }
 
 static void nw_usb_close(HIDInterface *hid)
@@ -330,6 +329,7 @@ static int nw_usb_get_calibration_presses(struct nwusb *nw,
 struct nwusb *nw_usb_init(void)
 {
 	struct nwusb *nw;
+	int ret;
 
 	nw = calloc(1, sizeof(struct nwusb));
 	if (!nw) {
@@ -337,13 +337,29 @@ struct nwusb *nw_usb_init(void)
 		return 0;
 	}
 
-	nw->hid = nw_usb_open(0x1926, 0x0001);
-	if (!nw->hid) {
-		nw->hid = nw_usb_open(0x1926, 0x0003);
+	ret = nw_usb_open(0x1926, 0x0001, nw);
+	if (ret == HID_RET_DEVICE_NOT_FOUND) {
+		ret = nw_usb_open(0x1926, 0x0003, nw);
 	}
 
-	if (!nw->hid) {
-		fprintf(stderr, "Error opening device\n");
+	switch (ret) {
+	case 0:
+		break;
+
+	case HID_RET_DEVICE_NOT_FOUND:
+		fprintf(stderr, "Error: No touchscreen detected\n");
+		break;
+
+	case HID_RET_FAIL_DETACH_DRIVER:
+		fprintf(stderr, "Error accessing touchscreen, are you root?\n");
+		break;
+
+	default:
+		fprintf(stderr, "Error opening device (%d)\n", ret);
+		break;
+	}
+
+	if (ret) {
 		free(nw);
 		return 0;
 	}
