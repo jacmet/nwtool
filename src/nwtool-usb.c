@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <hid.h>
 #include "nwtool-usb.h"
@@ -32,7 +33,21 @@
 
 struct nwusb {
 	HIDInterface *hid;
+	int bus_nr;
 };
+
+static bool nw_usb_match(struct usb_dev_handle const *usbdev,
+			 void *custom, unsigned int len)
+{
+	struct nwusb *nw = custom;
+	struct usb_device const *dev;
+	int bus;
+
+	dev = usb_device((usb_dev_handle*)usbdev);
+	bus = strtol(dev->bus->dirname, NULL, 10);
+
+	return bus == nw->bus_nr;
+}
 
 static int nw_usb_open(unsigned short vid, unsigned short pid, struct nwusb *nw)
 {
@@ -42,6 +57,11 @@ static int nw_usb_open(unsigned short vid, unsigned short pid, struct nwusb *nw)
 	memset(&matcher, 0, sizeof(matcher));
 	matcher.vendor_id = vid;
 	matcher.product_id = pid;
+
+	if (nw->bus_nr != -1) {
+		matcher.matcher_fn = nw_usb_match;
+		matcher.custom_data = nw;
+	}
 
 	ret = hid_init();
 	if (ret) {
@@ -326,7 +346,7 @@ static int nw_usb_get_calibration_presses(struct nwusb *nw,
 	return nw_usb_poll(nw, NWUSB_GOT_CALIBRATIONPRESSES, result);
 }
 
-struct nwusb *nw_usb_init(void)
+struct nwusb *nw_usb_init(int bus_nr)
 {
 	struct nwusb *nw;
 	int ret;
@@ -336,6 +356,8 @@ struct nwusb *nw_usb_init(void)
 		perror("malloc");
 		return 0;
 	}
+
+	nw->bus_nr = bus_nr;
 
 	ret = nw_usb_open(0x1926, 0x0001, nw);
 	if (ret == HID_RET_DEVICE_NOT_FOUND) {

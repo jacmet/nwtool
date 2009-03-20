@@ -24,7 +24,7 @@ static void usage(void)
 		"  -v, --version\t\t\tshow version info\n"
 		"  -s, --serial <device>\t\taccess touchscreen over serial\n"
 #ifdef WITH_USB
-		"  -u, --usb\t\t\taccess touchscreen over USB\n"
+		"  -u[<n>], --usb[=<n>]\t\taccess touchscreen over USB [on bus nr n]\n"
 		"  -i, --info\t\t\tdisplay info and current settings\n"
 		"  -r, --rightclick\t\tset rightclick delay to <ms>\n"
 		"  -d, --doubleclick\t\tset doubleclick time to <ms>\n"
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 		{ "help",		no_argument,	 	0, 'h' },
 		{ "version",		no_argument,	 	0, 'v' },
 		{ "serial",		required_argument,	0, 's' },
-		{ "usb",		no_argument,		0, 'u' },
+		{ "usb",		optional_argument,	0, 'u' },
 		{ "info",		no_argument,	 	0, 'i' },
 		{ "rightclick",		required_argument, 	0, 'r' },
 		{ "doubleclick",	required_argument,	0, 'd' },
@@ -94,12 +94,12 @@ int main(int argc, char **argv)
 		{ "cancel-calibration",	no_argument,		0, 'C' },
 		{ 0, 0, 0, 0 }
 	};
-	int c;
+	int c, usb_bus_nr = -1;
 	struct nwusb *usb = 0;
 	struct nwserial *ser = 0;
 
 	do {
-		c = getopt_long(argc, argv, "hvus:ir:d:D:m:b:t:k:p:fcC",
+		c = getopt_long(argc, argv, "hvu::s:ir:d:D:m:b:t:k:p:fcC",
 				options, 0);
 
 		switch (c) {
@@ -129,7 +129,10 @@ int main(int argc, char **argv)
 				usage();
 			}
 
-			usb = nw_usb_init();
+			if (optarg)
+				usb_bus_nr = parse_nr(optarg);
+
+			usb = nw_usb_init(usb_bus_nr);
 			if (!usb)
 				usage();
 			break;
