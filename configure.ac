@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT(nwtool,0.0.4,peter.korsgaard@barco.com)
+AC_INIT(nwtool,0.0.5,peter.korsgaard@barco.com)
 AM_INIT_AUTOMAKE
 #AC_CONFIG_HEADERS([src/config.h])
 
