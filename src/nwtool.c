@@ -1,7 +1,7 @@
 /*
  * nwtool: NextWindow touchscreen utility
  *
- * Copyright (C) 2008 Peter Korsgaard <peter.korsgaard@barco.com>
+ * Copyright (C) 2008-2009 Peter Korsgaard <peter.korsgaard@barco.com>
  *
  * This file is licensed under the terms of the GNU General Public License
  * version 2.  This program is licensed "as is" without any warranty of any
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 
 		switch (c) {
 		case 'v':
-			printf("nwtool version " VERSION ", (C) 2008 "
+			printf("nwtool version " VERSION ", (C) 2008-2009 "
 			       "Peter Korsgaard <peter.korsgaard@barco.com>\n");
 			exit(0);
 			break;
