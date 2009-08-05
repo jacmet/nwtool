@@ -20,24 +20,24 @@
 static void usage(void)
 {
 	fprintf(stderr, "usage: nwtool [OPTION] ...\n"
-		"  -h, --help\t\t\tshow usage info\n"
-		"  -v, --version\t\t\tshow version info\n"
-		"  -s, --serial <device>\t\taccess touchscreen over serial\n"
+		"  -h, --help\t\t\t\tshow usage info\n"
+		"  -v, --version\t\t\t\tshow version info\n"
+		"  -s, --serial <device>\t\t\taccess touchscreen over serial\n"
 #ifdef WITH_USB
-		"  -u[<bus[:dev]>], --usb[=<bus[:dev]>] access TS over USB [on bus/dev nr]\n"
-		"  -i, --info\t\t\tdisplay info and current settings\n"
-		"  -r, --rightclick\t\tset rightclick delay to <ms>\n"
-		"  -d, --doubleclick\t\tset doubleclick time to <ms>\n"
-		"  -D, --drag-threshold\t\tset drag threshold to <value>\n"
-		"  -m, --report-mode\t\tset reporting mode to <mode>\n"
-		"  -b, --buzzer-time\t\tset buzzer time to <ms>\n"
-		"  -t, --buzzer-tone\t\tset buzzer tone to <value>\n"
-		"  -k, --calibration-key\t\tset calibration key to <value>\n"
-		"  -p, --calibration-presses\tset nr of calibration presses\n"
+		"  -u[<bus[:dev]>], --usb[=<bus[:dev]>]\taccess TS over USB [on bus/dev nr]\n"
+		"  -i, --info\t\t\t\tdisplay info and current settings\n"
+		"  -r, --rightclick <ms>\t\t\tset rightclick delay to <ms>\n"
+		"  -d, --doubleclick <ms>\t\tset doubleclick time to <ms>\n"
+		"  -D, --drag-threshold <value>\t\tset drag threshold to <value>\n"
+		"  -m, --report-mode <mode>\t\tset reporting mode to <mode>\n"
+		"  -b, --buzzer-time <ms>\t\tset buzzer time to <ms>\n"
+		"  -t, --buzzer-tone <value>\t\tset buzzer tone to <value>\n"
+		"  -k, --calibration-key <value>\t\tset calibration key to <value>\n"
+		"  -p, --calibration-presses <nr>\tset nr of calibration presses\n"
 #endif
-		"  -f, --forward\t\t\tforward touchscreen events to kernel\n"
-		"  -c, --calibrate\t\tput touchscreen in calibration mode\n"
-		"  -C, --cancel-calibration\tput touchscreen out of "
+		"  -f, --forward\t\t\t\tforward touchscreen events to kernel\n"
+		"  -c, --calibrate\t\t\tput touchscreen in calibration mode\n"
+		"  -C, --cancel-calibration\t\tput touchscreen out of "
 		"calibration mode\n");
 
 	exit(1);
