@@ -24,7 +24,7 @@ static void usage(void)
 		"  -v, --version\t\t\tshow version info\n"
 		"  -s, --serial <device>\t\taccess touchscreen over serial\n"
 #ifdef WITH_USB
-		"  -u[<n>], --usb[=<n>]\t\taccess touchscreen over USB [on bus nr n]\n"
+		"  -u[<bus[:dev]>], --usb[=<bus[:dev]>] access TS over USB [on bus/dev nr]\n"
 		"  -i, --info\t\t\tdisplay info and current settings\n"
 		"  -r, --rightclick\t\tset rightclick delay to <ms>\n"
 		"  -d, --doubleclick\t\tset doubleclick time to <ms>\n"
@@ -57,6 +57,31 @@ static int parse_nr(char *arg)
 
 	return val;
 }
+
+/* parse usb bus or bus:dev string */
+static void parse_bus_dev(char *arg, int *bus, int *dev)
+{
+	char *endp;
+
+	*bus = strtol(arg, &endp, 0);
+	switch (*endp) {
+	case 0:
+		return;
+
+	case ':':
+		*dev = strtol(endp + 1, &endp, 0);
+		if (*endp == 0)
+			return;
+
+		/* fall through */
+
+	default:
+		fprintf(stderr, "invalid USB bus:dev number '%s'\n", arg);
+		usage();
+		break;
+	}
+}
+
 #endif /* WITH_USB */
 
 static void missing(int need)
@@ -94,7 +119,7 @@ int main(int argc, char **argv)
 		{ "cancel-calibration",	no_argument,		0, 'C' },
 		{ 0, 0, 0, 0 }
 	};
-	int c, usb_bus_nr = -1;
+	int c, usb_bus_nr = -1, usb_dev_nr = -1;
 	struct nwusb *usb = 0;
 	struct nwserial *ser = 0;
 
@@ -130,9 +155,9 @@ int main(int argc, char **argv)
 			}
 
 			if (optarg)
-				usb_bus_nr = parse_nr(optarg);
+				parse_bus_dev(optarg, &usb_bus_nr, &usb_dev_nr);
 
-			usb = nw_usb_init(usb_bus_nr);
+			usb = nw_usb_init(usb_bus_nr, usb_dev_nr);
 			if (!usb)
 				usage();
 			break;

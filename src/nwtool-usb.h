@@ -13,7 +13,7 @@
 
 struct nwusb;
 
-struct nwusb *nw_usb_init(int bus_nr);
+struct nwusb *nw_usb_init(int bus_nr, int dev_nr);
 
 void nw_usb_deinit(struct nwusb *nw);
 

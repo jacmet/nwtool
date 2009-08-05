@@ -34,6 +34,7 @@
 struct nwusb {
 	HIDInterface *hid;
 	int bus_nr;
+	int dev_nr;
 };
 
 static bool nw_usb_match(struct usb_dev_handle const *usbdev,
@@ -41,12 +42,19 @@ static bool nw_usb_match(struct usb_dev_handle const *usbdev,
 {
 	struct nwusb *nw = custom;
 	struct usb_device const *dev;
-	int bus;
+	int id;
 
 	dev = usb_device((usb_dev_handle*)usbdev);
-	bus = strtol(dev->bus->dirname, NULL, 10);
+	id = strtol(dev->bus->dirname, NULL, 10);
+	if (id != nw->bus_nr)
+		return 0;
 
-	return bus == nw->bus_nr;
+	if (nw->dev_nr != -1) {
+		id = strtol(dev->filename, NULL, 10);
+		return id == nw->dev_nr;
+	} else {
+		return 1;
+	}
 }
 
 static int nw_usb_open(unsigned short vid, unsigned short pid, struct nwusb *nw)
@@ -346,7 +354,7 @@ static int nw_usb_get_calibration_presses(struct nwusb *nw,
 	return nw_usb_poll(nw, NWUSB_GOT_CALIBRATIONPRESSES, result);
 }
 
-struct nwusb *nw_usb_init(int bus_nr)
+struct nwusb *nw_usb_init(int bus_nr, int dev_nr)
 {
 	struct nwusb *nw;
 	int ret;
@@ -358,6 +366,7 @@ struct nwusb *nw_usb_init(int bus_nr)
 	}
 
 	nw->bus_nr = bus_nr;
+	nw->dev_nr = dev_nr;
 
 	ret = nw_usb_open(0x1926, 0x0001, nw);
 	if (ret == HID_RET_DEVICE_NOT_FOUND) {
